@@ -24,7 +24,7 @@ end
 exports('CreateEntity', createEntity)
 
 ---@class FetchVehicleEntityQuery
----@field valueType string
+---@field valueType 'citizenid'|'license'|'plate'
 ---@field value string
 
 ---@alias vehicleEntity table
