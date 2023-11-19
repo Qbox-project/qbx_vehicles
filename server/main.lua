@@ -27,7 +27,7 @@ exports('CreateEntity', createEntity)
 
 ---@alias vehicleEntity table
 
---- Fetch Entity
+--- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
 ---@return vehicleEntity[]
 local function fetchEntity(query)
@@ -44,7 +44,7 @@ exports('FetchEntity', fetchEntity)
 ---@field valueType string
 ---@field value string
 
---- Updates a DB Entity
+--- Updates a DB Vehicle Entity
 ---@param query UpdateEntityVehicleQuery
 ---@param vehiclePlate string
 local function updateEntity(query, vehiclePlate)
@@ -57,7 +57,7 @@ end
 
 exports('UpdateEntity', updateEntity)
 
---- Deletes a DB Entity
+--- Deletes a DB Vehicle Entity
 ---@param vehiclePlate string
 local function deleteEntity(vehiclePlate)
     MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {vehiclePlate})
