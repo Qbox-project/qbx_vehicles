@@ -70,6 +70,8 @@ end
 
 exports("UpdateEntityOwner", updateEntityOwner)
 
+
+
 --- Deletes a DB Vehicle Entity through searching for the number plate
 ---@param vehiclePlate string
 local function deleteEntityFromPlate(vehiclePlate)

@@ -10,6 +10,5 @@ server_scripts {
     'server/main.lua'
 }
 
-provide 'qb-vehicles'
 lua54 'yes'
 use_experimental_fxv2_oal 'yes'
