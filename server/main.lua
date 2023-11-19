@@ -3,20 +3,18 @@
 ---@field citizenId string
 ---@field model string
 ---@field plate string
----@field garage string
 ---@field mods string
 
 --- Creates a Vehicle DB Entity
 ---@param query InsertVehicleEntityQuery Insert Vehicle Entity Request
 local function createEntity(query)
-    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, garage, state) VALUES (?,?,?,?,?,?,?,?)', {
+    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES (?,?,?,?,?,?,?)', {
         query.license,
         query.citizenId,
         query.model,
         joaat(query.model),
         query.mods or '{}',
         query.plate,
-        query.garage or 'pillboxgarage',
         0
     })
 end
