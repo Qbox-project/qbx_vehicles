@@ -27,12 +27,3 @@ ADD UNIQUE INDEX UK_playervehicles_plate (plate);
 ALTER TABLE `player_vehicles`
 ADD CONSTRAINT FK_playervehicles_players FOREIGN KEY (citizenid)
 REFERENCES `players` (citizenid) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `player_vehicles`
-ADD COLUMN `balance` int(11) NOT NULL DEFAULT 0;
-ALTER TABLE `player_vehicles`
-ADD COLUMN `paymentamount` int(11) NOT NULL DEFAULT 0;
-ALTER TABLE `player_vehicles`
-ADD COLUMN `paymentsleft` int(11) NOT NULL DEFAULT 0;
-ALTER TABLE `player_vehicles`
-ADD COLUMN `financetime` int(11) NOT NULL DEFAULT 0;
