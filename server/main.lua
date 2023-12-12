@@ -33,13 +33,22 @@ exports('CreateVehicleEntity', createEntity)
 
 --- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
----@return vehicleEntity[]|nil
+---@return vehicleData[]|nil
 local function fetchEntity(query)
+    local vehicleData = {}
     if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
-    return MySQL.await('SELECT * FROM player_vehicles WHERE ? = ?', {
+    local results = MySQL.await('SELECT * FROM player_vehicles WHERE ? = ?', {
         query.valueType,
         query.value
     })
+    for _, data in ipairs(results) do
+        vehicleData[#vehicleData + 1] = {
+            id = data.id,
+            citizenid = data.citizenid,
+            model = data.vehicle,
+        }
+    end
+    return vehicleData
 end
 
 exports('FetchVehicleEntity', fetchEntity)
