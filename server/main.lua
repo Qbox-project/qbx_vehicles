@@ -37,7 +37,7 @@ exports('CreateVehicleEntity', createEntity)
 local function fetchEntity(query)
     local vehicleData = {}
     if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
-    local results = MySQL.await('SELECT * FROM player_vehicles WHERE ? = ?', {
+    local results = MySQL.query.await('SELECT * FROM player_vehicles WHERE ? = ?', {
         query.valueType,
         query.value
     })
