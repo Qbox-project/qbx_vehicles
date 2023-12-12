@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `player_vehicles` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `license` varchar(50) DEFAULT NULL,
-    `citizenid` varchar(50) DEFAULT NULL,
+    `license` varchar(50) NOT NULL,
+    `citizenid` varchar(50) NOT NULL,
     `vehicle` varchar(50) DEFAULT NULL,
     `hash` varchar(50) DEFAULT NULL,
     `mods` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
