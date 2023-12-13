@@ -1,25 +1,22 @@
----@class vehicleData
----@field model string
----@field plate string
----@field mods string
-
----@class playerData
+---@class CreateEntityQuery
 ---@field license string
 ---@field citizenId string
-
+---@field model string
+---@field mods table
+---@field plate string
+---@field state number
 
 --- Creates a Vehicle DB Entity
----@param playerData playerData
----@param vehicleData vehicleData
-local function createEntity(playerData, vehicleData)
+---@param query CreateEntityQuery
+local function createEntity(query)
     MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES (?,?,?,?,?,?,?)', {
-        playerData.license,
-        playerData.citizenId,
-        vehicleData.model,
-        joaat(vehicleData.model),
-        vehicleData.mods or '{}',
-        vehicleData.plate,
-        0
+        query.license,
+        query.citizenId,
+        query.model,
+        joaat(query.model),
+        query.mods or '{}',
+        query.plate,
+        query.state or 0
     })
 end
 
@@ -33,7 +30,7 @@ exports('CreateVehicleEntity', createEntity)
 
 --- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
----@return vehicleData[]|nil
+---@return vehicleData[]
 local function fetchEntity(query)
     local vehicleData = {}
     if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
@@ -41,7 +38,7 @@ local function fetchEntity(query)
         query.valueType,
         query.value
     })
-    for _, data in ipairs(results) do
+    for _, data in pairs(results) do
         vehicleData[#vehicleData + 1] = {
             id = data.id,
             citizenid = data.citizenid,
@@ -70,32 +67,33 @@ end
 
 exports('UpdateVehicleEntity', updateEntity)
 
+---@class SetEntityOwnerQuery
+---@field citizenId string
+---@field vehiclePlate string
+
 --- Update Vehicle Entity Owner
----@param citizenId string
----@param license string
----@param vehiclePlate string
-local function updateEntityOwner(citizenId, license, vehiclePlate)
-    MySQL.update('UPDATE player_vehicles SET citizenid = ?, license = ? WHERE plate = ?', {
-        citizenId,
-        license,
-        vehiclePlate
+---@param query SetEntityOwnerQuery
+local function setEntityOwner(query)
+    MySQL.update('UPDATE player_vehicles SET citizenid = ? WHERE plate = ?', {
+        query.citizenId,
+        query.vehiclePlate
     })
 end
 
-exports("UpdateVehicleEntityOwner", updateEntityOwner)
+exports("SetVehicleEntityOwner", setEntityOwner)
 
 --- Deletes a DB Vehicle Entity through searching for the number plate
 ---@param vehiclePlate string
-local function deleteEntityFromPlate(vehiclePlate)
+local function deleteEntityByPlate(vehiclePlate)
     MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {vehiclePlate})
 end
 
-exports('DeleteVehicleEntityFromPlate', deleteEntityFromPlate)
+exports('DeleteVehicleEntityFromPlate', deleteEntityByPlate)
 
 --- Deletes DB Vehicle entities(-y) through searching for the citizen id
 ---@param citizenId string 
 local function deleteEntitiesByCitizenId(citizenId)
-    MySQL.query('DELETE FROM player_vehicels WHERE citizenid = ?', {citizenId})
+    MySQL.query('DELETE FROM player_vehicles WHERE citizenid = ?', {citizenId})
 end
 
 exports('DeleteVehicleEntitiesByCitizenId', deleteEntitiesByCitizenId)
