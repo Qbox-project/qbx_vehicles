@@ -1,10 +1,10 @@
 ---@class CreateEntityQuery
----@field license string
----@field citizenId string
----@field model string
----@field mods table
----@field plate string
----@field state number
+---@field license string The license of the owner
+---@field citizenId string The citizen id of the owner
+---@field model string The model of the vehicle
+---@field mods? table The modifications of the vehicle
+---@field plate string The plate of the vehicle
+---@field state? number The state of the vehicle
 
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
@@ -14,7 +14,7 @@ local function createEntity(query)
         query.citizenId,
         query.model,
         joaat(query.model),
-        query.mods or '{}',
+        json.encode(query.mods) or nil,
         query.plate,
         query.state or 0
     })
@@ -69,26 +69,20 @@ exports('UpdateVehicleEntity', updateEntity)
 
 ---@class SetEntityOwnerQuery
 ---@field citizenId string
+---@field license string
 ---@field vehiclePlate string
 
 --- Update Vehicle Entity Owner
 ---@param query SetEntityOwnerQuery
 local function setEntityOwner(query)
-    MySQL.update('UPDATE player_vehicles SET citizenid = ? WHERE plate = ?', {
+    MySQL.update('UPDATE player_vehicles SET citizenid = ?, license = ? WHERE plate = ?', {
         query.citizenId,
+        query.license,
         query.vehiclePlate
     })
 end
 
 exports("SetVehicleEntityOwner", setEntityOwner)
-
---- Deletes a DB Vehicle Entity through searching for the number plate
----@param vehiclePlate string
-local function deleteEntityByPlate(vehiclePlate)
-    MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {vehiclePlate})
-end
-
-exports('DeleteVehicleEntityFromPlate', deleteEntityByPlate)
 
 --- Deletes DB Vehicle entities(-y) through searching for the citizen id
 ---@param citizenId string 
@@ -97,3 +91,19 @@ local function deleteEntitiesByCitizenId(citizenId)
 end
 
 exports('DeleteVehicleEntitiesByCitizenId', deleteEntitiesByCitizenId)
+
+--- Deletes a DB Vehicle Entity through searching for the number plate
+---@param plate string
+local function deleteEntityByPlate(plate)
+    MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {plate})
+end
+
+exports('DeleteVehicleEntityByPlate', deleteEntityByPlate)
+
+--- Deletes DB Vehicle entities(-y) through searching for the license
+---@param license string 
+local function deleteEntitiesByLicense(license)
+    MySQL.query('DELETE FROM player_vehicles WHERE license = ?', {license})
+end
+
+exports('DeleteEntitiesByLicense', deleteEntitiesByLicense)
