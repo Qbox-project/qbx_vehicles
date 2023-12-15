@@ -14,7 +14,7 @@ local function createEntity(query)
         query.citizenId,
         query.model,
         joaat(query.model),
-        json.encode(query.mods) or nil,
+        query.mods and json.encode(query.mods) or nil,
         query.plate,
         query.state or 0
     })
