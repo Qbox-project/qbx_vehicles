@@ -48,7 +48,41 @@ local function fetchEntity(query)
     return vehicleData
 end
 
-exports('FetchVehicleEntity', fetchEntity)
+---Fetches DB Vehicle Entity by CiizenId
+---@param citizenId string
+---@return vehicleData[]
+local function fetchEntityByCitizenId(citizenId)
+    fetchEntity({
+        valueType = 'citizenid',
+        value = citizenId
+    })
+end
+
+exports('FetcEntityByCitizenId', fetchEntityByCitizenId)
+
+---Fetches DB Vehicle Entity by License
+---@param license string
+---@return vehicleData[]
+local function fetchEntityByLicense(license)
+    fetchEntity({
+        valueType = 'license',
+        value = license
+    })
+end
+
+exports('FetchEntityByLicense', fetchEntityByLicense)
+
+---Fetches DB Vehicle Entity by Plate
+---@param plate string
+---@return vehicleData[]
+local function fetchEntityByPlate(plate)
+    fetchEntity({
+        valueType = 'plate',
+        value = plate
+    })
+end
+
+exports('FetchEntityByPlate', fetchEntityByPlate)
 
 ---@class UpdateEntityVehicleQuery
 ---@field valueType string
