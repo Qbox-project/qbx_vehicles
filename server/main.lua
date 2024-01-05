@@ -111,6 +111,7 @@ exports('UpdateVehicleEntity', updateEntity)
 local function setEntityOwner(query)
     MySQL.update('UPDATE player_vehicles INNER JOIN players ON players.citizenid = @citizenid SET player_vehicles.citizenid = @citizenid player_vehicles.license = players.license WHERE player_vehicles.plate = @plate', {
         citizenid = query.citizenId,
+        license = query.citizenId,
         plate = query.vehiclePlate,
     })
 end
@@ -123,7 +124,7 @@ local function deleteEntitiesByCitizenId(citizenId)
     MySQL.query('DELETE FROM player_vehicles WHERE citizenid = ?', {citizenId})
 end
 
-exports('DeleteVehicleEntitiesByCitizenId', deleteEntitiesByCitizenId)
+exports('DeleteEntitiesByCitizenId', deleteEntitiesByCitizenId)
 
 --- Deletes a DB Vehicle Entity through searching for the number plate
 ---@param plate string
@@ -131,7 +132,7 @@ local function deleteEntityByPlate(plate)
     MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {plate})
 end
 
-exports('DeleteVehicleEntityByPlate', deleteEntityByPlate)
+exports('DeleteEntityByPlate', deleteEntityByPlate)
 
 --- Deletes DB Vehicle entities(-y) through searching for the license
 ---@param license string 
