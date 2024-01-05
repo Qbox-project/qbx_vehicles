@@ -1,3 +1,10 @@
+---@enum States
+local States = {
+    OUT = 0,
+    GARAGED = 1,
+    IMPOUNDED = 2
+}
+
 ---@class CreateEntityQuery
 ---@field license string The license of the owner
 ---@field citizenId string The citizen id of the owner
@@ -9,14 +16,16 @@
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
 local function createEntity(query)
+    local license = MySQL.query.await('Select citizenid FOM players WHERE license = ?', {query.license})
+
     MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES (?,?,?,?,?,?,?)', {
-        query.license,
+        license,
         query.citizenId,
         query.model,
         joaat(query.model),
         query.mods and json.encode(query.mods) or nil,
         query.plate,
-        query.state or 0
+        States[query.state] or States.OUT
     })
 end
 
@@ -26,12 +35,12 @@ exports('CreateVehicleEntity', createEntity)
 ---@field valueType 'citizenid'|'license'|'plate'
 ---@field value string
 
----@alias vehicleEntity table
+---@alias VehicleEntity table
 
 --- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
 ---@return vehicleData[]
-local function fetchEntity(query)
+local function fetchEntities(query)
     local vehicleData = {}
     if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
     local results = MySQL.query.await('SELECT * FROM player_vehicles WHERE ? = ?', {
@@ -51,55 +60,38 @@ end
 ---Fetches DB Vehicle Entity by CiizenId
 ---@param citizenId string
 ---@return vehicleData[]
-local function fetchEntityByCitizenId(citizenId)
-    fetchEntity({
+local function fetchEntitiesByCitizenId(citizenId)
+    fetchEntities({
         valueType = 'citizenid',
         value = citizenId
     })
 end
 
-exports('FetcEntityByCitizenId', fetchEntityByCitizenId)
+exports('FetchEntitiesByCitizenId', fetchEntitiesByCitizenId)
 
 ---Fetches DB Vehicle Entity by License
 ---@param license string
 ---@return vehicleData[]
-local function fetchEntityByLicense(license)
-    fetchEntity({
+local function fetchEntitiesByLicense(license)
+    fetchEntities({
         valueType = 'license',
         value = license
     })
 end
 
-exports('FetchEntityByLicense', fetchEntityByLicense)
+exports('FetchEntitiesByLicense', fetchEntitiesByLicense)
 
 ---Fetches DB Vehicle Entity by Plate
 ---@param plate string
 ---@return vehicleData[]
-local function fetchEntityByPlate(plate)
-    fetchEntity({
+local function fetchEntitiesByPlate(plate)
+    fetchEntities({
         valueType = 'plate',
         value = plate
     })
 end
 
-exports('FetchEntityByPlate', fetchEntityByPlate)
-
----@class UpdateEntityVehicleQuery
----@field valueType string
----@field value string
-
---- Updates a DB Vehicle Entity
----@param query UpdateEntityVehicleQuery
----@param plate string
-local function updateEntity(query, plate)
-    MySQL.update('UPDATE player_vehicles SET ? = ?, WHERE plate = ?', {
-        query.valueType,
-        query.value,
-        plate
-    })
-end
-
-exports('UpdateVehicleEntity', updateEntity)
+exports('FetchEntitiesByPlate', fetchEntitiesByPlate)
 
 ---@class SetEntityOwnerQuery
 ---@field citizenId string
