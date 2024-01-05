@@ -111,7 +111,7 @@ exports('UpdateVehicleEntity', updateEntity)
 local function setEntityOwner(query)
     MySQL.update('UPDATE player_vehicles INNER JOIN players ON players.citizenid = @citizenid SET player_vehicles.citizenid = @citizenid player_vehicles.license = players.license WHERE player_vehicles.plate = @plate', {
         citizenid = query.citizenId,
-        license = query.citizenId,
+        license = query.license,
         plate = query.vehiclePlate,
     })
 end
