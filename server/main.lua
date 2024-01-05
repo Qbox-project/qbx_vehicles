@@ -1,12 +1,11 @@
----@enum States
-local States = {
+---@enum State
+local State = {
     OUT = 0,
     GARAGED = 1,
     IMPOUNDED = 2
 }
 
 ---@class CreateEntityQuery
----@field license string The license of the owner
 ---@field citizenId string The citizen id of the owner
 ---@field model string The model of the vehicle
 ---@field mods? table The modifications of the vehicle
@@ -16,16 +15,14 @@ local States = {
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
 local function createEntity(query)
-    local license = MySQL.query.await('Select citizenid FOM players WHERE license = ?', {query.license})
-
-    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES (?,?,?,?,?,?,?)', {
-        license,
+    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
+        query.citizenId,
         query.citizenId,
         query.model,
         joaat(query.model),
         query.mods and json.encode(query.mods) or nil,
         query.plate,
-        States[query.state] or States.OUT
+        query.state or State.OUT
     })
 end
 
@@ -95,28 +92,19 @@ exports('FetchEntitiesByPlate', fetchEntitiesByPlate)
 
 ---@class SetEntityOwnerQuery
 ---@field citizenId string
----@field license string
 ---@field plate string
 
 --- Update Vehicle Entity Owner
 ---@param query SetEntityOwnerQuery
 local function setEntityOwner(query)
-    MySQL.update('UPDATE player_vehicles INNER JOIN players ON players.citizenid = @citizenid SET player_vehicles.citizenid = @citizenid player_vehicles.license = players.license WHERE player_vehicles.plate = @plate', {
-        citizenid = query.citizenId,
-        license = query.license,
-        plate = query.plate,
+    MySQL.update('UPDATE player_vehicles INNER JOIN (SELECT license FROM players WHERE citizenid = ?) AS subquery ON subquery.license = player_vehicles.license SET player_vehicles.citizenid = ?, player_vehicles.license = subquery.license WHERE player_vehicles.plate = ?', {
+        query.citizenId,
+        query.citizenId,
+        query.plate
     })
 end
 
 exports("SetVehicleEntityOwner", setEntityOwner)
-
---- Deletes DB Vehicle entities(-y) through searching for the citizen id
----@param citizenId string 
-local function deleteEntitiesByCitizenId(citizenId)
-    MySQL.query('DELETE FROM player_vehicles WHERE citizenid = ?', {citizenId})
-end
-
-exports('DeleteEntitiesByCitizenId', deleteEntitiesByCitizenId)
 
 --- Deletes a DB Vehicle Entity through searching for the number plate
 ---@param plate string
@@ -125,11 +113,3 @@ local function deleteEntityByPlate(plate)
 end
 
 exports('DeleteEntityByPlate', deleteEntityByPlate)
-
---- Deletes DB Vehicle entities(-y) through searching for the license
----@param license string 
-local function deleteEntitiesByLicense(license)
-    MySQL.query('DELETE FROM player_vehicles WHERE license = ?', {license})
-end
-
-exports('DeleteEntitiesByLicense', deleteEntitiesByLicense)
