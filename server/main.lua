@@ -10,7 +10,7 @@ local State = {
 ---@field model string The model of the vehicle
 ---@field mods? table The modifications of the vehicle
 ---@field plate string The plate of the vehicle
----@field state? number The state of the vehicle
+---@field state? enum The state of the vehicle
 
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
@@ -36,7 +36,7 @@ exports('CreateVehicleEntity', createEntity)
 
 --- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
----@return vehicleData[]
+---@return VehicleData[]
 local function fetchEntities(query)
     local vehicleData = {}
     if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
