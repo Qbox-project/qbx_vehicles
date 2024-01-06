@@ -10,7 +10,7 @@ local State = {
 ---@field model string The model of the vehicle
 ---@field mods? table The modifications of the vehicle
 ---@field plate string The plate of the vehicle
----@field state? enum The state of the vehicle
+---@field state? State The state of the vehicle
 
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
@@ -97,7 +97,7 @@ exports('FetchEntitiesByPlate', fetchEntitiesByPlate)
 --- Update Vehicle Entity Owner
 ---@param query SetEntityOwnerQuery
 local function setEntityOwner(query)
-    MySQL.update('UPDATE player_vehicles INNER JOIN (SELECT license FROM players WHERE citizenid = ?) AS subquery ON subquery.license = player_vehicles.license SET player_vehicles.citizenid = ?, player_vehicles.license = subquery.license WHERE player_vehicles.plate = ?', {
+    MySQL.update('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = ?) WHERE plate = ?', {
         query.citizenId,
         query.citizenId,
         query.plate
