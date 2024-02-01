@@ -5,6 +5,27 @@ local State = {
     IMPOUNDED = 2
 }
 
+---@class VehicleEntity
+---@field license string
+---@field citizenid string
+---@field vehicle string
+---@field hash number
+---@field mods table
+---@field plate string
+---@field fakeplate string
+---@field garage string
+---@field fuel number
+---@field engine number
+---@field body number
+---@field state State
+---@field depotprice number
+---@field drivingdistance number
+---@field status string
+---@field balance number
+---@field paymentamount number
+---@field paymentsleft number
+---@field financetime number
+
 ---@class CreateEntityQuery
 ---@field citizenId string The citizen id of the owner
 ---@field model string The model of the vehicle
@@ -32,14 +53,12 @@ exports('CreateVehicleEntity', createEntity)
 ---@field valueType 'citizenid'|'license'|'plate'
 ---@field value string
 
----@alias VehicleEntity table
-
 --- Fetches DB Vehicle Entity
 ---@param query FetchVehicleEntityQuery
----@return VehicleData[]
+---@return VehicleEntity[]
 local function fetchEntities(query)
     local vehicleData = {}
-    if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return end
+    if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return {} end
     local results = MySQL.query.await('SELECT * FROM player_vehicles WHERE ? = ?', {
         query.valueType,
         query.value
@@ -56,9 +75,9 @@ end
 
 ---Fetches DB Vehicle Entity by CiizenId
 ---@param citizenId string
----@return vehicleData[]
+---@return VehicleEntity[]
 local function fetchEntitiesByCitizenId(citizenId)
-    fetchEntities({
+    return fetchEntities({
         valueType = 'citizenid',
         value = citizenId
     })
@@ -68,9 +87,9 @@ exports('FetchEntitiesByCitizenId', fetchEntitiesByCitizenId)
 
 ---Fetches DB Vehicle Entity by License
 ---@param license string
----@return vehicleData[]
+---@return VehicleEntity[]
 local function fetchEntitiesByLicense(license)
-    fetchEntities({
+    return fetchEntities({
         valueType = 'license',
         value = license
     })
@@ -80,9 +99,9 @@ exports('FetchEntitiesByLicense', fetchEntitiesByLicense)
 
 ---Fetches DB Vehicle Entity by Plate
 ---@param plate string
----@return vehicleData[]
+---@return VehicleEntity[]
 local function fetchEntitiesByPlate(plate)
-    fetchEntities({
+    return fetchEntities({
         valueType = 'plate',
         value = plate
     })
@@ -113,3 +132,13 @@ local function deleteEntityByPlate(plate)
 end
 
 exports('DeleteEntityByPlate', deleteEntityByPlate)
+
+--- Returns if the given plate exists
+---@param plate string
+---@return boolean
+local function doesEntityPlateExist(plate)
+    local count = MySQL.scalar.await('SELECT COUNT(*) FROM player_vehicles WHERE plate = ?', {plate})
+    return count > 0
+end
+
+exports('DoesEntityPlateExist', doesEntityPlateExist)
