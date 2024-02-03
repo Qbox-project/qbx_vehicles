@@ -1,4 +1,4 @@
-fxversion 'cerulean'
+fx_version 'cerulean'
 game 'gta5'
 
 description 'QBX_Vehicles'
