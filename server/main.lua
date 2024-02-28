@@ -21,10 +21,6 @@ local State = {
 ---@field depotprice number
 ---@field drivingdistance number
 ---@field status string
----@field balance number
----@field paymentamount number
----@field paymentsleft number
----@field financetime number
 
 ---@class CreateEntityQuery
 ---@field citizenId string The citizen id of the owner
