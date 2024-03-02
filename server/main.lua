@@ -31,8 +31,9 @@ local State = {
 
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
+---@return vehicleId integer
 local function createEntity(query)
-    MySQL.insert('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
+    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
         query.citizenId,
         query.citizenId,
         query.model,
@@ -128,6 +129,14 @@ local function deleteEntityByPlate(plate)
 end
 
 exports('DeleteEntityByPlate', deleteEntityByPlate)
+
+--- Deletes a DB Vehicle Entity through searching for the vehicle id
+---@param id integer
+local function deleteEntityById(id)
+    MySQL.query('DELETE FROM player_vehicles WHERE id = ?', {id})
+end
+
+exports('DeleteEntityById', deleteEntityById)
 
 --- Returns if the given plate exists
 ---@param plate string
