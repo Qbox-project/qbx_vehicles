@@ -31,7 +31,7 @@ local State = {
 
 --- Creates a Vehicle DB Entity
 ---@param query CreateEntityQuery
----@return vehicleId integer
+---@return integer vehicleId
 local function createEntity(query)
     return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
         query.citizenId,
