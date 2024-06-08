@@ -6,6 +6,7 @@ local State = {
 }
 
 ---@class VehicleEntity
+---@field id number
 ---@field license string
 ---@field citizenid string
 ---@field vehicle string
@@ -65,6 +66,18 @@ local function fetchEntities(query)
             id = data.id,
             citizenid = data.citizenid,
             model = data.vehicle,
+            hash = data.hash,
+            mods = data.mods,
+            plate = data.plate,
+            fakeplate = data.fakeplate,
+            garage = data.garage,
+            fuel = data.fuel,
+            engine = data.engine,
+            body = data.body,
+            state = data.state,
+            depotprice = data.depotprice,
+            drivingdistance = data.drivingdistance,
+            status = data.status
         }
     end
     return vehicleData
