@@ -1,3 +1,7 @@
+---@class ErrorResult
+---@field code string
+---@field message string
+
 ---@enum State
 local State = {
     OUT = 0,
@@ -5,12 +9,25 @@ local State = {
     IMPOUNDED = 2
 }
 
+---@alias IdType 'citizenid'|'license'|'plate'|'vehicleId'
+
+---@param idType IdType
+---@return ErrorResult?
+local function validateIdType(idType)
+    if idType ~= 'citizenid' and idType ~= 'license' and idType ~= 'plate' and idType ~= 'vehicleId' then
+        return {
+            code = 'bad_request',
+            message = 'idType:' .. json.encode(idType) .. ' is not a valid idType'
+        }
+    end
+end
+
 ---Returns true if the given plate exists
 ---@param plate string
 ---@return boolean
 local function doesEntityPlateExist(plate)
     local result = MySQL.scalar.await('SELECT 1 FROM player_vehicles WHERE plate = ?', {plate})
-    return not not result
+    return result ~= nil
 end
 
 exports('DoesEntityPlateExist', doesEntityPlateExist)
@@ -28,10 +45,13 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field license? string
 ---@field plate? string
 
----@param idType 'citizenid'|'license'|'plate'|'vehicleId'
+---@param idType IdType
 ---@param idValue string
----@return PlayerVehicle[]
+---@return PlayerVehicle[]?, ErrorResult? errorResult
 local function getPlayerVehicles(idType, idValue)
+    local err = validateIdType(idType)
+    if err then return nil, err end
+
     local column = idType == 'vehicleId' and 'id' or idType
     local results = MySQL.query.await('SELECT id, citizenid, vehicle, mods FROM player_vehicles WHERE ? = ?', {
         column,
@@ -57,8 +77,15 @@ exports('GetPlayerVehicles', getPlayerVehicles)
 ---@field props? table ox_lib properties to set. See https://github.com/overextended/ox_lib/blob/master/resource/vehicleProperties/client.lua#L3
 
 ---@param request CreatePlayerVehicleRequest
----@return integer vehicleId
+---@return integer? vehicleId, ErrorResult? errorResult
 local function createPlayerVehicle(request)
+    if not request.model then
+        return nil, {
+            code = 'bad_request',
+            message = 'missing required field model'
+        }
+    end
+
     local props = request.props or {}
     if not props.plate then
         repeat
@@ -84,25 +111,32 @@ end
 exports('CreatePlayerVehicle', createPlayerVehicle)
 
 ---@param vehicleId integer
----@param citizenId string
+---@param citizenId? string
+---@return boolean success, ErrorResult? errorResult
 local function setPlayerVehicleOwner(vehicleId, citizenId)
     MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = ?) WHERE id = ?', {
         citizenId,
         citizenId,
         vehicleId
     })
+    return true
 end
 
 exports('SetPlayerVehicleOwner', setPlayerVehicleOwner)
 
----@param idType 'citizenid'|'license'|'plate'|'vehicleId'
+---@param idType IdType
 ---@param idValue string
+---@return boolean success, ErrorResult? errorResult
 local function deletePlayerVehicles(idType, idValue)
+    local err = validateIdType(idType)
+    if err then return false, err end
+
     local column = idType == 'vehicleId' and 'id' or idType
     MySQL.query.await('DELETE FROM player_vehicles WHERE ? = ?', {
         column,
         idValue
     })
+    return true
 end
 
 exports('DeletePlayerVehicles', deletePlayerVehicles)
