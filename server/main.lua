@@ -26,7 +26,7 @@ end
 ---@param plate string
 ---@return boolean
 local function doesEntityPlateExist(plate)
-    local result = MySQL.scalar.await('SELECT 1 FROM player_vehicles WHERE plate = ?', {plate})
+    local result = MySQL.scalar.await('SELECT 1 FROM player_vehicles WHERE plate = ? LIMIT 1', {plate})
     return result ~= nil
 end
 
