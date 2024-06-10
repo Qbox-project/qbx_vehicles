@@ -1,9 +1,145 @@
+---@class ErrorResult
+---@field code string
+---@field message string
+
 ---@enum State
 local State = {
     OUT = 0,
     GARAGED = 1,
     IMPOUNDED = 2
 }
+
+---@alias IdType 'citizenid'|'license'|'plate'|'vehicleId'
+
+---@param idType IdType
+---@return ErrorResult?
+local function validateIdType(idType)
+    if idType ~= 'citizenid' and idType ~= 'license' and idType ~= 'plate' and idType ~= 'vehicleId' then
+        return {
+            code = 'bad_request',
+            message = 'idType:' .. json.encode(idType) .. ' is not a valid idType'
+        }
+    end
+end
+
+---Returns true if the given plate exists
+---@param plate string
+---@return boolean
+local function doesEntityPlateExist(plate)
+    local result = MySQL.scalar.await('SELECT 1 FROM player_vehicles WHERE plate = ? LIMIT 1', {plate})
+    return result ~= nil
+end
+
+exports('DoesEntityPlateExist', doesEntityPlateExist)
+exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
+
+---@class PlayerVehicle
+---@field id number
+---@field citizenid? string
+---@field modelName string
+---@field props table ox_lib properties table
+
+---@class GetPlayerVehiclesRequest
+---@field vehicleId? number
+---@field citizenid? string
+---@field license? string
+---@field plate? string
+
+---@param idType IdType
+---@param idValue string
+---@return PlayerVehicle[]?, ErrorResult? errorResult
+local function getPlayerVehicles(idType, idValue)
+    local err = validateIdType(idType)
+    if err then return nil, err end
+
+    local column = idType == 'vehicleId' and 'id' or idType
+    local results = MySQL.query.await('SELECT id, citizenid, vehicle, mods FROM player_vehicles WHERE ? = ?', {
+        column,
+        idValue,
+    })
+    local ownedVehicles = {}
+    for _, data in pairs(results) do
+        ownedVehicles[#ownedVehicles+1] = {
+            id = data.id,
+            citizenid = data.citizenid,
+            modelName = data.vehicle,
+            props = json.decode(data.mods)
+        }
+    end
+    return ownedVehicles
+end
+
+exports('GetPlayerVehicles', getPlayerVehicles)
+
+---@class CreatePlayerVehicleRequest
+---@field model string model name
+---@field citizenid? string owner of the vehicle
+---@field props? table ox_lib properties to set. See https://github.com/overextended/ox_lib/blob/master/resource/vehicleProperties/client.lua#L3
+
+---@param request CreatePlayerVehicleRequest
+---@return integer? vehicleId, ErrorResult? errorResult
+local function createPlayerVehicle(request)
+    if not request.model then
+        return nil, {
+            code = 'bad_request',
+            message = 'missing required field model'
+        }
+    end
+
+    local props = request.props or {}
+    if not props.plate then
+        repeat
+            props.plate = qbx.generateRandomPlate()
+        until doesEntityPlateExist(props.plate) == false
+    end
+    props.engineHealth = props.engineHealth or 1000
+    props.bodyHealth = props.bodyHealth or 1000
+    props.fuelLevel = props.fuelLevel or 100
+    props.model = joaat(request.model)
+
+    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
+        request.citizenid,
+        request.citizenid,
+        request.model,
+        props.model,
+        json.encode(props),
+        props.plate,
+        State.OUT
+    })
+end
+
+exports('CreatePlayerVehicle', createPlayerVehicle)
+
+---@param vehicleId integer
+---@param citizenId? string
+---@return boolean success, ErrorResult? errorResult
+local function setPlayerVehicleOwner(vehicleId, citizenId)
+    MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = ?) WHERE id = ?', {
+        citizenId,
+        citizenId,
+        vehicleId
+    })
+    return true
+end
+
+exports('SetPlayerVehicleOwner', setPlayerVehicleOwner)
+
+---@param idType IdType
+---@param idValue string
+---@return boolean success, ErrorResult? errorResult
+local function deletePlayerVehicles(idType, idValue)
+    local err = validateIdType(idType)
+    if err then return false, err end
+
+    local column = idType == 'vehicleId' and 'id' or idType
+    MySQL.query.await('DELETE FROM player_vehicles WHERE ? = ?', {
+        column,
+        idValue
+    })
+    return true
+end
+
+exports('DeletePlayerVehicles', deletePlayerVehicles)
 
 ---@class VehicleEntity
 ---@field id number
@@ -31,6 +167,7 @@ local State = {
 ---@field state? State The state of the vehicle
 
 --- Creates a Vehicle DB Entity
+---@deprecated
 ---@param query CreateEntityQuery
 ---@return integer vehicleId
 local function createEntity(query)
@@ -47,83 +184,12 @@ end
 
 exports('CreateVehicleEntity', createEntity)
 
----@class FetchVehicleEntityQuery
----@field valueType 'citizenid'|'license'|'plate'
----@field value string
-
---- Fetches DB Vehicle Entity
----@param query FetchVehicleEntityQuery
----@return VehicleEntity[]
-local function fetchEntities(query)
-    local vehicleData = {}
-    if query.valueType ~= 'citizenid' and query.valueType ~= 'license' and query.valueType ~= 'plate' then return {} end
-    local results = MySQL.query.await('SELECT * FROM player_vehicles WHERE ? = ?', {
-        query.valueType,
-        query.value
-    })
-    for _, data in pairs(results) do
-        vehicleData[#vehicleData + 1] = {
-            id = data.id,
-            citizenid = data.citizenid,
-            model = data.vehicle,
-            hash = data.hash,
-            mods = data.mods,
-            plate = data.plate,
-            fakeplate = data.fakeplate,
-            garage = data.garage,
-            fuel = data.fuel,
-            engine = data.engine,
-            body = data.body,
-            state = data.state,
-            depotprice = data.depotprice,
-            drivingdistance = data.drivingdistance,
-            status = data.status
-        }
-    end
-    return vehicleData
-end
-
----Fetches DB Vehicle Entity by CiizenId
----@param citizenId string
----@return VehicleEntity[]
-local function fetchEntitiesByCitizenId(citizenId)
-    return fetchEntities({
-        valueType = 'citizenid',
-        value = citizenId
-    })
-end
-
-exports('FetchEntitiesByCitizenId', fetchEntitiesByCitizenId)
-
----Fetches DB Vehicle Entity by License
----@param license string
----@return VehicleEntity[]
-local function fetchEntitiesByLicense(license)
-    return fetchEntities({
-        valueType = 'license',
-        value = license
-    })
-end
-
-exports('FetchEntitiesByLicense', fetchEntitiesByLicense)
-
----Fetches DB Vehicle Entity by Plate
----@param plate string
----@return VehicleEntity[]
-local function fetchEntitiesByPlate(plate)
-    return fetchEntities({
-        valueType = 'plate',
-        value = plate
-    })
-end
-
-exports('FetchEntitiesByPlate', fetchEntitiesByPlate)
-
 ---@class SetEntityOwnerQuery
 ---@field citizenId string
 ---@field plate string
 
 --- Update Vehicle Entity Owner
+---@deprecated
 ---@param query SetEntityOwnerQuery
 local function setEntityOwner(query)
     MySQL.update('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = ?) WHERE plate = ?', {
@@ -135,28 +201,11 @@ end
 
 exports("SetVehicleEntityOwner", setEntityOwner)
 
---- Deletes a DB Vehicle Entity through searching for the number plate
----@param plate string
-local function deleteEntityByPlate(plate)
-    MySQL.query('DELETE FROM player_vehicles WHERE plate = ?', {plate})
-end
-
-exports('DeleteEntityByPlate', deleteEntityByPlate)
-
 --- Deletes a DB Vehicle Entity through searching for the vehicle id
+---@deprecated
 ---@param id integer
 local function deleteEntityById(id)
     MySQL.query('DELETE FROM player_vehicles WHERE id = ?', {id})
 end
 
 exports('DeleteEntityById', deleteEntityById)
-
---- Returns if the given plate exists
----@param plate string
----@return boolean
-local function doesEntityPlateExist(plate)
-    local count = MySQL.scalar.await('SELECT COUNT(*) FROM player_vehicles WHERE plate = ?', {plate})
-    return count > 0
-end
-
-exports('DoesEntityPlateExist', doesEntityPlateExist)
