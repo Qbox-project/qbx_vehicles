@@ -7,6 +7,7 @@ version '0.0.1'
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
+    'qbx_core/modules/lib.lua',
     'server/main.lua'
 }
 
