@@ -42,47 +42,56 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field depotPrice integer
 ---@field props table ox_lib properties table
 
----@class GetPlayerVehiclesRequest
+---@class PlayerVehiclesFilters
 ---@field vehicleId? number
 ---@field citizenId? string
 ---@field states? State|State[]
 ---@field garage? string
 
----@param request GetPlayerVehiclesRequest
----@return PlayerVehicle[]
-local function getPlayerVehicles(request)
-    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles WHERE 1=1'
+---@param filters? PlayerVehiclesFilters
+---@return string whereClause, any[] placeholders
+local function buildWhereClause(filters)
+    if not filters then
+        return '', {}
+    end
+    local query = ' WHERE 1=1'
     local placeholders = {}
-    if request.vehicleId then
+    if filters.vehicleId then
         query = query .. ' AND id = ?'
-        placeholders[#placeholders+1] = request.vehicleId
+        placeholders[#placeholders+1] = filters.vehicleId
     end
-    if request.citizenId then
+    if filters.citizenId then
         query = query .. ' AND citizenid = ?'
-        placeholders[#placeholders+1] = request.citizenId
+        placeholders[#placeholders+1] = filters.citizenId
     end
-    if request.garage then
+    if filters.garage then
         query = query .. ' AND garage = ?'
-        placeholders[#placeholders+1] = request.garage
+        placeholders[#placeholders+1] = filters.garage
     end
-    if request.states then
-        if type(request.states) ~= 'table' then
+    if filters.states then
+        if type(filters.states) ~= 'table' then
             ---@diagnostic disable-next-line: assign-type-mismatch
-            request.states = {request.states}
+            filters.states = {filters.states}
         end
-        if #request.states > 0 then
+        if #filters.states > 0 then
             query = query .. ' AND (1=2'
-
-            for i = 1, #request.states do
-                local state = request.states[i]
+            for i = 1, #filters.states do
+                local state = filters.states[i]
                 query = query .. ' OR state = ?'
                 placeholders[#placeholders+1] = state
             end
             query = query .. ')'
         end
     end
+    return query, placeholders
+end
 
-    local results = MySQL.query.await(query, placeholders)
+---@param filters? PlayerVehiclesFilters
+---@return PlayerVehicle[]
+local function getPlayerVehicles(filters)
+    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
+    local whereClause, placeholders = buildWhereClause(filters)
+    local results = MySQL.query.await(query .. whereClause, placeholders)
     local ownedVehicles = {}
     for _, data in pairs(results) do
         ownedVehicles[#ownedVehicles+1] = {
