@@ -37,32 +37,61 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field id number
 ---@field citizenid? string
 ---@field modelName string
+---@field garage string
+---@field state State
+---@field depotPrice integer
 ---@field props table ox_lib properties table
 
 ---@class GetPlayerVehiclesRequest
 ---@field vehicleId? number
----@field citizenid? string
----@field license? string
----@field plate? string
+---@field citizenId? string
+---@field states? State|State[]
+---@field garage? string
 
----@param idType IdType
----@param idValue string
----@return PlayerVehicle[]?, ErrorResult? errorResult
-local function getPlayerVehicles(idType, idValue)
-    local err = validateIdType(idType)
-    if err then return nil, err end
+---@param request GetPlayerVehiclesRequest
+---@return PlayerVehicle[]
+local function getPlayerVehicles(request)
+    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles WHERE 1=1'
+    local placeholders = {}
+    if request.vehicleId then
+        query = query .. ' AND id = ?'
+        placeholders[#placeholders+1] = request.vehicleId
+    end
+    if request.citizenId then
+        query = query .. ' AND citizenid = ?'
+        placeholders[#placeholders+1] = request.citizenId
+    end
+    if request.garage then
+        query = query .. ' AND garage = ?'
+        placeholders[#placeholders+1] = request.garage
+    end
+    if request.states then
+        if type(request.states) ~= 'table' then
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            request.states = {request.states}
+        end
+        if #request.states > 0 then
+            query = query .. ' AND (1=2'
 
-    local column = idType == 'vehicleId' and 'id' or idType
-    local results = MySQL.query.await('SELECT id, citizenid, vehicle, mods FROM player_vehicles WHERE ? = ?', {
-        column,
-        idValue,
-    })
+            for i = 1, #request.states do
+                local state = request.states[i]
+                query = query .. ' OR state = ?'
+                placeholders[#placeholders+1] = state
+            end
+            query = query .. ')'
+        end
+    end
+
+    local results = MySQL.query.await(query, placeholders)
     local ownedVehicles = {}
     for _, data in pairs(results) do
         ownedVehicles[#ownedVehicles+1] = {
             id = data.id,
             citizenid = data.citizenid,
             modelName = data.vehicle,
+            garage = data.garage,
+            state = data.state,
+            depotPrice = data.depotprice,
             props = json.decode(data.mods)
         }
     end
@@ -74,6 +103,7 @@ exports('GetPlayerVehicles', getPlayerVehicles)
 ---@class CreatePlayerVehicleRequest
 ---@field model string model name
 ---@field citizenid? string owner of the vehicle
+---@field garage? string
 ---@field props? table ox_lib properties to set. See https://github.com/overextended/ox_lib/blob/master/resource/vehicleProperties/client.lua#L3
 
 ---@param request CreatePlayerVehicleRequest
@@ -97,14 +127,15 @@ local function createPlayerVehicle(request)
     props.fuelLevel = props.fuelLevel or 100
     props.model = joaat(request.model)
 
-    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?)', {
+    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state, garage) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?,?)', {
         request.citizenid,
         request.citizenid,
         request.model,
         props.model,
         json.encode(props),
         props.plate,
-        State.OUT
+        request.garage and State.GARAGED or State.OUT,
+        request.garage
     })
 end
 
