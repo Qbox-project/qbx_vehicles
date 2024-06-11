@@ -5,9 +5,13 @@ description 'QBX_Vehicles'
 repository 'https://github.com/Qbox-project/qbx_vehicles'
 version '0.0.1'
 
+shared_scripts {
+    '@ox_lib/init.lua',
+    '@qbx_core/modules/lib.lua'
+}
+
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'qbx_core/modules/lib.lua',
     'server/main.lua'
 }
 
