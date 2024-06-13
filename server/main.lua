@@ -43,12 +43,14 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field props table ox_lib properties table
 
 ---@class PlayerVehiclesFilters
----@field vehicleId? number
 ---@field citizenId? string
 ---@field states? State|State[]
 ---@field garage? string
 
----@param filters? PlayerVehiclesFilters
+---@class PlayerVehiclesInternalFilters: PlayerVehiclesFilters
+---@field vehicleId? number
+
+---@param filters? PlayerVehiclesInternalFilters
 ---@return string whereClause, any[] placeholders
 local function buildWhereClause(filters)
     if not filters then
@@ -85,9 +87,9 @@ local function buildWhereClause(filters)
     return query, placeholders
 end
 
----@param filters? PlayerVehiclesFilters
+---@param filters? PlayerVehiclesInternalFilters
 ---@return PlayerVehicle[]
-local function getPlayerVehicles(filters)
+local function getPlayerVehiclesInternal(filters)
     local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
     local whereClause, placeholders = buildWhereClause(filters)
     local results = MySQL.query.await(query .. whereClause, placeholders)
@@ -106,7 +108,27 @@ local function getPlayerVehicles(filters)
     return ownedVehicles
 end
 
+---@param filters? PlayerVehiclesFilters
+---@return PlayerVehicle[]
+local function getPlayerVehicles(filters)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    return getPlayerVehiclesInternal(filters)
+end
+
 exports('GetPlayerVehicles', getPlayerVehicles)
+
+---@param vehicleId number
+---@param filters? PlayerVehiclesFilters
+---@return PlayerVehicle?
+local function getPlayerVehicle(vehicleId, filters)
+    if not filters then filters = {} end
+    ---@diagnostic disable-next-line: inject-field
+    filters.vehicleId = vehicleId
+    ---@diagnostic disable-next-line: param-type-mismatch
+    return getPlayerVehiclesInternal(filters)[1]
+end
+
+exports('GetPlayerVehicle', getPlayerVehicle)
 
 ---@class CreatePlayerVehicleRequest
 ---@field model string model name
