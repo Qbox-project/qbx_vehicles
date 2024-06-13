@@ -74,13 +74,12 @@ local function buildWhereClause(filters)
             filters.states = {filters.states}
         end
         if #filters.states > 0 then
-            query = query .. ' AND (1=2'
+            local statePlaceholders = {}
             for i = 1, #filters.states do
-                local state = filters.states[i]
-                query = query .. ' OR state = ?'
-                placeholders[#placeholders+1] = state
+                placeholders[#placeholders+1] = filters.states[i]
+                statePlaceholders[i] = 'state = ?'
             end
-            query = query .. ')'
+            query = query .. string.format(' AND (%s)', table.concat(statePlaceholders, ' OR '))
         end
     end
     return query, placeholders
