@@ -30,7 +30,6 @@ local function doesEntityPlateExist(plate)
     return result ~= nil
 end
 
-exports('DoesEntityPlateExist', doesEntityPlateExist)
 exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 
 ---@class PlayerVehicle
