@@ -91,6 +91,7 @@ end
 local function getPlayerVehiclesInternal(filters)
     local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
     local whereClause, placeholders = buildWhereClause(filters)
+    lib.print.debug(query .. whereClause)
     local results = MySQL.query.await(query .. whereClause, placeholders)
     local ownedVehicles = {}
     for _, data in pairs(results) do
