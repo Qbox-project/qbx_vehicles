@@ -55,20 +55,8 @@ local function buildWhereClause(filters)
     if not filters then
         return '', {}
     end
-    local query = ' WHERE 1=1'
     local placeholders = {}
-    if filters.vehicleId then
-        query = query .. ' AND id = ?'
-        placeholders[#placeholders+1] = filters.vehicleId
-    end
-    if filters.citizenid then
-        query = query .. ' AND citizenid = ?'
-        placeholders[#placeholders+1] = filters.citizenid
-    end
-    if filters.garage then
-        query = query .. ' AND garage = ?'
-        placeholders[#placeholders+1] = filters.garage
-    end
+    local whereClauseCrumbs = {}
     if filters.states then
         if type(filters.states) ~= 'table' then
             ---@diagnostic disable-next-line: assign-type-mismatch
@@ -80,10 +68,23 @@ local function buildWhereClause(filters)
                 placeholders[#placeholders+1] = filters.states[i]
                 statePlaceholders[i] = 'state = ?'
             end
-            query = query .. string.format(' AND (%s)', table.concat(statePlaceholders, ' OR '))
+            whereClauseCrumbs[#whereClauseCrumbs+1] = table.concat(statePlaceholders, ' OR ')
         end
     end
-    return query, placeholders
+    if filters.vehicleId then
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'id = ?'
+        placeholders[#placeholders+1] = filters.vehicleId
+    end
+    if filters.citizenid then
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'citizenid = ?'
+        placeholders[#placeholders+1] = filters.citizenid
+    end
+    if filters.garage then
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'garage = ?'
+        placeholders[#placeholders+1] = filters.garage
+    end
+
+    return string.format(' WHERE %s', table.concat(whereClauseCrumbs, ' AND ')), placeholders
 end
 
 ---@param filters? PlayerVehiclesInternalFilters
