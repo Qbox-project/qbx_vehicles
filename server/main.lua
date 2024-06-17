@@ -42,7 +42,7 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field props table ox_lib properties table
 
 ---@class PlayerVehiclesFilters
----@field citizenId? string
+---@field citizenid? string
 ---@field states? State|State[]
 ---@field garage? string
 
@@ -61,9 +61,9 @@ local function buildWhereClause(filters)
         query = query .. ' AND id = ?'
         placeholders[#placeholders+1] = filters.vehicleId
     end
-    if filters.citizenId then
+    if filters.citizenid then
         query = query .. ' AND citizenid = ?'
-        placeholders[#placeholders+1] = filters.citizenId
+        placeholders[#placeholders+1] = filters.citizenid
     end
     if filters.garage then
         query = query .. ' AND garage = ?'
@@ -157,28 +157,26 @@ local function createPlayerVehicle(request)
     props.fuelLevel = props.fuelLevel or 100
     props.model = joaat(request.model)
 
-    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state, garage) VALUES ((SELECT license FROM players WHERE citizenid = ?),?,?,?,?,?,?,?)', {
-        request.citizenid,
-        request.citizenid,
-        request.model,
-        props.model,
-        json.encode(props),
-        props.plate,
-        request.garage and State.GARAGED or State.OUT,
-        request.garage
+    return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state, garage) VALUES ((SELECT license FROM players WHERE citizenid = @citizenid), @citizenid, @vehicle, @hash, @mods, @plate, @state, @garage)', {
+        citizenid = request.citizenid,
+        vehicle = request.model,
+        hash = props.model,
+        mods = json.encode(props),
+        plate = props.plate,
+        state = request.garage and State.GARAGED or State.OUT,
+        garage = request.garage
     })
 end
 
 exports('CreatePlayerVehicle', createPlayerVehicle)
 
 ---@param vehicleId integer
----@param citizenId? string
+---@param citizenid? string
 ---@return boolean success, ErrorResult? errorResult
-local function setPlayerVehicleOwner(vehicleId, citizenId)
-    MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = ?) WHERE id = ?', {
-        citizenId,
-        citizenId,
-        vehicleId
+local function setPlayerVehicleOwner(vehicleId, citizenid)
+    MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = @citizenid) WHERE id = @id', {
+        citizenid = citizenid,
+        id = vehicleId
     })
     return true
 end
@@ -186,15 +184,14 @@ end
 exports('SetPlayerVehicleOwner', setPlayerVehicleOwner)
 
 ---@param idType IdType
----@param idValue string
+---@param idValue string | number
 ---@return boolean success, ErrorResult? errorResult
 local function deletePlayerVehicles(idType, idValue)
     local err = validateIdType(idType)
     if err then return false, err end
 
     local column = idType == 'vehicleId' and 'id' or idType
-    MySQL.query.await('DELETE FROM player_vehicles WHERE ? = ?', {
-        column,
+    MySQL.query.await('DELETE FROM player_vehicles WHERE ' .. column .. ' = ?', {
         idValue
     })
     return true
