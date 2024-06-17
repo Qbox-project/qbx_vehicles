@@ -191,7 +191,6 @@ local function deletePlayerVehicles(idType, idValue)
     if err then return false, err end
 
     local column = idType == 'vehicleId' and 'id' or idType
-    lib.print.info("deleting from column", column)
     MySQL.query.await('DELETE FROM player_vehicles WHERE ' .. column .. ' = ?', {
         idValue
     })
