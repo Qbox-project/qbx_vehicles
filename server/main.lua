@@ -55,18 +55,18 @@ local function buildWhereClause(filters)
     if not filters then
         return '', {}
     end
-    local query = ' WHERE 1=1'
     local placeholders = {}
+    local whereClauseCrumbs = {}
     if filters.vehicleId then
-        query = query .. ' AND id = ?'
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'id = ?'
         placeholders[#placeholders+1] = filters.vehicleId
     end
     if filters.citizenid then
-        query = query .. ' AND citizenid = ?'
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'citizenid = ?'
         placeholders[#placeholders+1] = filters.citizenid
     end
     if filters.garage then
-        query = query .. ' AND garage = ?'
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'garage = ?'
         placeholders[#placeholders+1] = filters.garage
     end
     if filters.states then
@@ -80,10 +80,11 @@ local function buildWhereClause(filters)
                 placeholders[#placeholders+1] = filters.states[i]
                 statePlaceholders[i] = 'state = ?'
             end
-            query = query .. string.format(' AND (%s)', table.concat(statePlaceholders, ' OR '))
+            whereClauseCrumbs[#whereClauseCrumbs+1] = string.format('(%s)', table.concat(statePlaceholders, ' OR '))
         end
     end
-    return query, placeholders
+
+    return string.format(' WHERE %s', table.concat(whereClauseCrumbs, ' AND ')), placeholders
 end
 
 ---@param filters? PlayerVehiclesInternalFilters
