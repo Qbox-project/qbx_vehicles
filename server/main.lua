@@ -57,20 +57,6 @@ local function buildWhereClause(filters)
     end
     local placeholders = {}
     local whereClauseCrumbs = {}
-    if filters.states then
-        if type(filters.states) ~= 'table' then
-            ---@diagnostic disable-next-line: assign-type-mismatch
-            filters.states = {filters.states}
-        end
-        if #filters.states > 0 then
-            local statePlaceholders = {}
-            for i = 1, #filters.states do
-                placeholders[#placeholders+1] = filters.states[i]
-                statePlaceholders[i] = 'state = ?'
-            end
-            whereClauseCrumbs[#whereClauseCrumbs+1] = table.concat(statePlaceholders, ' OR ')
-        end
-    end
     if filters.vehicleId then
         whereClauseCrumbs[#whereClauseCrumbs+1] = 'id = ?'
         placeholders[#placeholders+1] = filters.vehicleId
@@ -82,6 +68,20 @@ local function buildWhereClause(filters)
     if filters.garage then
         whereClauseCrumbs[#whereClauseCrumbs+1] = 'garage = ?'
         placeholders[#placeholders+1] = filters.garage
+    end
+    if filters.states then
+        if type(filters.states) ~= 'table' then
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            filters.states = {filters.states}
+        end
+        if #filters.states > 0 then
+            local statePlaceholders = {}
+            for i = 1, #filters.states do
+                placeholders[#placeholders+1] = filters.states[i]
+                statePlaceholders[i] = 'state = ?'
+            end
+            whereClauseCrumbs[#whereClauseCrumbs+1] = string.format('(%s)', table.concat(statePlaceholders, ' OR '))
+        end
     end
 
     return string.format(' WHERE %s', table.concat(whereClauseCrumbs, ' AND ')), placeholders
