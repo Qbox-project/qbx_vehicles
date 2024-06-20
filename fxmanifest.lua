@@ -1,6 +1,8 @@
 fx_version 'cerulean'
 game 'gta5'
 
+server_only 'yes'
+
 description 'QBX_Vehicles'
 repository 'https://github.com/Qbox-project/qbx_vehicles'
 version '0.0.1'
