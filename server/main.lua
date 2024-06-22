@@ -9,19 +9,6 @@ local State = {
     IMPOUNDED = 2
 }
 
----@alias IdType 'citizenid'|'license'|'plate'|'vehicleId'
-
----@param idType IdType
----@return ErrorResult?
-local function validateIdType(idType)
-    if idType ~= 'citizenid' and idType ~= 'license' and idType ~= 'plate' and idType ~= 'vehicleId' then
-        return {
-            code = 'bad_request',
-            message = 'idType:' .. json.encode(idType) .. ' is not a valid idType'
-        }
-    end
-end
-
 ---Returns true if the given plate exists
 ---@param plate string
 ---@return boolean
@@ -122,6 +109,7 @@ exports('GetPlayerVehicles', getPlayerVehicles)
 ---@param filters? PlayerVehiclesFilters
 ---@return PlayerVehicle?
 local function getPlayerVehicle(vehicleId, filters)
+    assert(vehicleId ~= nil, "required field vehicleId was nil")
     if not filters then filters = {} end
     ---@diagnostic disable-next-line: inject-field
     filters.vehicleId = vehicleId
@@ -140,12 +128,7 @@ exports('GetPlayerVehicle', getPlayerVehicle)
 ---@param request CreatePlayerVehicleRequest
 ---@return integer? vehicleId, ErrorResult? errorResult
 local function createPlayerVehicle(request)
-    if not request.model then
-        return nil, {
-            code = 'bad_request',
-            message = 'missing required field model'
-        }
-    end
+    assert(request.model ~= nil, 'missing required field: model')
 
     local props = request.props or {}
     if not props.plate then
@@ -175,6 +158,7 @@ exports('CreatePlayerVehicle', createPlayerVehicle)
 ---@param citizenid? string
 ---@return boolean success, ErrorResult? errorResult
 local function setPlayerVehicleOwner(vehicleId, citizenid)
+    assert(vehicleId ~= nil, "required field vehicleId was nil")
     MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = @citizenid) WHERE id = @id', {
         citizenid = citizenid,
         id = vehicleId
@@ -184,12 +168,11 @@ end
 
 exports('SetPlayerVehicleOwner', setPlayerVehicleOwner)
 
----@param idType IdType
+---@param idType 'citizenid'|'license'|'plate'|'vehicleId'
 ---@param idValue string | number
 ---@return boolean success, ErrorResult? errorResult
 local function deletePlayerVehicles(idType, idValue)
-    local err = validateIdType(idType)
-    if err then return false, err end
+    assert(idType == 'citizenid' or idType == 'license' or idType == 'plate' or idType == 'vehicleId', json.encode(idType) .. ' is not a valid idType')
 
     local column = idType == 'vehicleId' and 'id' or idType
     MySQL.query.await('DELETE FROM player_vehicles WHERE ' .. column .. ' = ?', {
