@@ -1,3 +1,5 @@
+assert(lib.checkDependency('qbx_core', '1.2.0', true))
+
 ---@class ErrorResult
 ---@field code string
 ---@field message string
@@ -8,6 +10,8 @@ local State = {
     GARAGED = 1,
     IMPOUNDED = 2
 }
+
+local triggerEventHooks = require '@qbx_core.modules.hooks'
 
 ---Returns true if the given plate exists
 ---@param plate string
@@ -141,6 +145,13 @@ local function createPlayerVehicle(request)
     props.fuelLevel = props.fuelLevel or 100
     props.model = joaat(request.model)
 
+    if not triggerEventHooks('createPlayerVehicle', { citizenid = request.citizenid, garage = request.garage, props = props }) then
+        return nil, {
+            code = 'hook_cancelled',
+            message = 'a createPlayerVehicle event hook cancelled this operation'
+        }
+    end
+
     return MySQL.insert.await('INSERT INTO player_vehicles (license, citizenid, vehicle, hash, mods, plate, state, garage) VALUES ((SELECT license FROM players WHERE citizenid = @citizenid), @citizenid, @vehicle, @hash, @mods, @plate, @state, @garage)', {
         citizenid = request.citizenid,
         vehicle = request.model,
@@ -159,6 +170,13 @@ exports('CreatePlayerVehicle', createPlayerVehicle)
 ---@return boolean success, ErrorResult? errorResult
 local function setPlayerVehicleOwner(vehicleId, citizenid)
     assert(vehicleId ~= nil, "required field vehicleId was nil")
+    if not triggerEventHooks('changeVehicleOwner', { vehicleId = vehicleId, newCitizenId = citizenid }) then
+        return false, {
+            code = 'hook_cancelled',
+            message = 'a changeVehicleOwner event hook cancelled this operation'
+        }
+    end
+    triggerEventHooks('')
     MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = @citizenid) WHERE id = @id', {
         citizenid = citizenid,
         id = vehicleId
