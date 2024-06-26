@@ -176,7 +176,6 @@ local function setPlayerVehicleOwner(vehicleId, citizenid)
             message = 'a changeVehicleOwner event hook cancelled this operation'
         }
     end
-    triggerEventHooks('')
     MySQL.update.await('UPDATE player_vehicles SET citizenid = ?, license = (SELECT license FROM players WHERE citizenid = @citizenid) WHERE id = @id', {
         citizenid = citizenid,
         id = vehicleId
