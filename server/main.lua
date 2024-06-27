@@ -185,6 +185,17 @@ end
 
 exports('SetPlayerVehicleOwner', setPlayerVehicleOwner)
 
+---@param vehicleId integer
+---@param garageName string
+local function setGarage(vehicleId, garageName)
+    MySQL.update.await('UPDATE player_vehicles SET garage = ? WHERE id = ?', {
+        garageName,
+        vehicleId
+    })
+end
+
+exports('SetGarage', setGarage)
+
 ---@param idType 'citizenid'|'license'|'plate'|'vehicleId'
 ---@param idValue string | number
 ---@return boolean success, ErrorResult? errorResult
