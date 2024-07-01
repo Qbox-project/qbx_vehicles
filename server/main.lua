@@ -199,3 +199,14 @@ local function deletePlayerVehicles(idType, idValue)
 end
 
 exports('DeletePlayerVehicles', deletePlayerVehicles)
+
+---Find the vehicleId with the given plate if it exists.
+---@param plate string
+---@return integer? vehicleId
+local function getVehicleIdByPlate(plate)
+    return MySQL.scalar.await('SELECT id FROM player_vehicles WHERE plate = ?', {
+        qbx.string.trim(plate)
+    })
+end
+
+exports('GetVehicleIdByPlate', getVehicleIdByPlate)
