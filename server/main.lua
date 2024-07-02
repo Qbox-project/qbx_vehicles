@@ -210,3 +210,60 @@ local function getVehicleIdByPlate(plate)
 end
 
 exports('GetVehicleIdByPlate', getVehicleIdByPlate)
+
+---@class SaveVehicleOptions
+---@field garage? string
+---@field state? State
+---@field depotPrice? integer
+---@field props? table ox_lib properties table
+
+---@param vehicleId integer
+---@param options SaveVehicleOptions
+---@return string query, table placeholders
+local function buildSaveVehicleQuery(vehicleId, options)
+    local crumbs = {}
+    local placeholders = {}
+
+    if options.state then
+        crumbs[#crumbs+1] = 'state = ?'
+        placeholders[#placeholders+1] = options.state
+    end
+
+    if options.depotPrice then
+        crumbs[#crumbs+1] = 'depotprice = ?'
+        placeholders[#placeholders+1] = options.depotPrice
+    end
+
+    if options.garage then
+        crumbs[#crumbs+1] = 'garage = ?'
+        placeholders[#placeholders+1] = options.garage
+    end
+
+    if options.props then
+        crumbs[#crumbs+1] = 'mods = ?'
+        placeholders[#placeholders+1] = json.encode(options.props)
+    end
+
+    placeholders[#placeholders+1] = vehicleId
+
+    return string.format('UPDATE player_vehicles SET %s WHERE id = ?', table.concat(crumbs, ',')), placeholders
+end
+
+---@param vehicle number entity
+---@param options SaveVehicleOptions
+---@return boolean success, ErrorResult? errorResult
+local function saveVehicle(vehicle, options)
+    local vehicleId = Entity(vehicle).state.vehicleid or getVehicleIdByPlate(GetVehicleNumberPlateText(vehicle))
+    if not vehicleId then
+        return false, {
+            code = 'not_owned',
+            message = 'vehicle does not have a vehicleId and plate is not in the player_vehicles table'
+        }
+    end
+
+    local query, placeholders = buildSaveVehicleQuery(vehicleId, options)
+    MySQL.update.await(query, placeholders)
+    return true
+end
+
+exports('SaveVehicle', saveVehicle)
