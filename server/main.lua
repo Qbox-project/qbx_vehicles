@@ -249,6 +249,7 @@ local function buildSaveVehicleQuery(vehicleId, options)
     return string.format('UPDATE player_vehicles SET %s WHERE id = ?', table.concat(crumbs, ',')), placeholders
 end
 
+---@param vehicle number entity
 ---@param options SaveVehicleOptions
 ---@return boolean success, ErrorResult? errorResult
 local function saveVehicle(vehicle, options)
