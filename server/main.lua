@@ -242,6 +242,26 @@ local function buildSaveVehicleQuery(vehicleId, options)
     if options.props then
         crumbs[#crumbs+1] = 'mods = ?'
         placeholders[#placeholders+1] = json.encode(options.props)
+
+        if options.props.plate then
+            crumbs[#crumbs+1] = 'plate = ?'
+            placeholders[#placeholders+1] = options.props.plate
+        end
+
+        if options.props.fuelLevel then
+            crumbs[#crumbs+1] = 'fuel = ?'
+            placeholders[#placeholders+1] = options.props.fuelLevel
+        end
+
+        if options.props.engineHealth then
+            crumbs[#crumbs+1] = 'engine = ?'
+            placeholders[#placeholders+1] = options.props.engineHealth
+        end
+
+        if options.props.bodyHealth then
+            crumbs[#crumbs+1] = 'body = ?'
+            placeholders[#placeholders+1] = options.props.bodyHealth
+        end
     end
 
     placeholders[#placeholders+1] = vehicleId
