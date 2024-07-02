@@ -3,7 +3,7 @@ game 'gta5'
 
 description 'QBX_Vehicles'
 repository 'https://github.com/Qbox-project/qbx_vehicles'
-version '1.3.0'
+version '1.3.1'
 
 server_scripts {
     '@ox_lib/init.lua',
