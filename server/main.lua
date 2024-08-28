@@ -63,7 +63,7 @@ local function buildWhereClause(filters)
     end
     if filters.plate then
         whereClauseCrumbs[#whereClauseCrumbs+1] = 'plate = ?'
-        placeholders[#placeholders+1] = filters.garage
+        placeholders[#placeholders+1] = filters.plate
     end
     
     if filters.states then
