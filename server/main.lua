@@ -36,6 +36,7 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field citizenid? string
 ---@field states? State|State[]
 ---@field garage? string
+---@field plate? string
 
 ---@class PlayerVehiclesInternalFilters: PlayerVehiclesFilters
 ---@field vehicleId? number
@@ -60,6 +61,11 @@ local function buildWhereClause(filters)
         whereClauseCrumbs[#whereClauseCrumbs+1] = 'garage = ?'
         placeholders[#placeholders+1] = filters.garage
     end
+    if filters.plate then
+        whereClauseCrumbs[#whereClauseCrumbs+1] = 'plate = ?'
+        placeholders[#placeholders+1] = filters.garage
+    end
+    
     if filters.states then
         if type(filters.states) ~= 'table' then
             ---@diagnostic disable-next-line: assign-type-mismatch
@@ -81,7 +87,7 @@ end
 ---@param filters? PlayerVehiclesInternalFilters
 ---@return PlayerVehicle[]
 local function getPlayerVehiclesInternal(filters)
-    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
+    local query = 'SELECT id, citizenid, vehicle, mods, plate, garage, state, depotprice FROM player_vehicles'
     local whereClause, placeholders = buildWhereClause(filters)
     lib.print.debug(query .. whereClause)
     local results = MySQL.query.await(query .. whereClause, placeholders)
@@ -91,6 +97,7 @@ local function getPlayerVehiclesInternal(filters)
             id = data.id,
             citizenid = data.citizenid,
             modelName = data.vehicle,
+            plate = data.plate,
             garage = data.garage,
             state = data.state,
             depotPrice = data.depotprice,
