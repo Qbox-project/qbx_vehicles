@@ -36,7 +36,6 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field citizenid? string
 ---@field states? State|State[]
 ---@field garage? string
----@field plate? string
 
 ---@class PlayerVehiclesInternalFilters: PlayerVehiclesFilters
 ---@field vehicleId? number
@@ -61,11 +60,6 @@ local function buildWhereClause(filters)
         whereClauseCrumbs[#whereClauseCrumbs+1] = 'garage = ?'
         placeholders[#placeholders+1] = filters.garage
     end
-    if filters.plate then
-        whereClauseCrumbs[#whereClauseCrumbs+1] = 'plate = ?'
-        placeholders[#placeholders+1] = filters.plate
-    end
-    
     if filters.states then
         if type(filters.states) ~= 'table' then
             ---@diagnostic disable-next-line: assign-type-mismatch
