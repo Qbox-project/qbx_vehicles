@@ -81,7 +81,7 @@ end
 ---@param filters? PlayerVehiclesInternalFilters
 ---@return PlayerVehicle[]
 local function getPlayerVehiclesInternal(filters)
-    local query = 'SELECT id, citizenid, vehicle, mods, plate, garage, state, depotprice FROM player_vehicles'
+    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
     local whereClause, placeholders = buildWhereClause(filters)
     lib.print.debug(query .. whereClause)
     local results = MySQL.query.await(query .. whereClause, placeholders)
@@ -91,7 +91,6 @@ local function getPlayerVehiclesInternal(filters)
             id = data.id,
             citizenid = data.citizenid,
             modelName = data.vehicle,
-            plate = data.plate,
             garage = data.garage,
             state = data.state,
             depotPrice = data.depotprice,
