@@ -32,6 +32,7 @@ exports('DoesPlayerVehiclePlateExist', doesEntityPlateExist)
 ---@field state State
 ---@field depotPrice integer
 ---@field props table ox_lib properties table
+---@field coords table vector4
 
 ---@class PlayerVehiclesFilters
 ---@field citizenid? string
@@ -82,7 +83,7 @@ end
 ---@param filters? PlayerVehiclesInternalFilters
 ---@return PlayerVehicle[]
 local function getPlayerVehiclesInternal(filters)
-    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice FROM player_vehicles'
+    local query = 'SELECT id, citizenid, vehicle, mods, garage, state, depotprice, coords FROM player_vehicles'
     local whereClause, placeholders = buildWhereClause(filters)
     lib.print.debug(query .. whereClause)
     local results = MySQL.query.await(query .. whereClause, placeholders)
@@ -95,7 +96,8 @@ local function getPlayerVehiclesInternal(filters)
             garage = data.garage,
             state = data.state,
             depotPrice = data.depotprice,
-            props = json.decode(data.mods)
+            props = json.decode(data.mods),
+            coords = json.decode(data.coords)
         }
     end
     return ownedVehicles
@@ -217,6 +219,7 @@ exports('GetVehicleIdByPlate', getVehicleIdByPlate)
 ---@field state? State
 ---@field depotPrice? integer
 ---@field props? table ox_lib properties table
+---@field coords? table vector4
 
 ---@param vehicleId integer
 ---@param options SaveVehicleOptions
@@ -263,6 +266,11 @@ local function buildSaveVehicleQuery(vehicleId, options)
             crumbs[#crumbs+1] = 'body = ?'
             placeholders[#placeholders+1] = options.props.bodyHealth
         end
+    end
+
+    if options.coords then
+        crumbs[#crumbs+1] = 'coords = ?'
+        placeholders[#placeholders+1] = json.encode(options.coords)
     end
 
     placeholders[#placeholders+1] = vehicleId
