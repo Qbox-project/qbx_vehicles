@@ -17,6 +17,5 @@ CREATE TABLE IF NOT EXISTS `player_vehicles` (
   `status` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `plate` (`plate`),
-  FOREIGN KEY (`citizenid`) REFERENCES `players` (`citizenid`) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (`license`) REFERENCES `players` (`license`) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (`citizenid`) REFERENCES `players` (`citizenid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
