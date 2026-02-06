@@ -296,4 +296,18 @@ local function saveVehicle(vehicle, options)
     return true
 end
 
+
+local function SaveVehicleById(vehicleid, options)
+    if not vehicleid then
+        return false
+    end
+
+    local query, placeholders = buildSaveVehicleQuery(vehicleid, options)
+    MySQL.update.await(query, placeholders)
+    TriggerEvent('qbx_vehicles:server:vehicleSaved', vehicleid)
+    return true
+end
+
+exports('SaveVehicleById', SaveVehicleById)
+
 exports('SaveVehicle', saveVehicle)
