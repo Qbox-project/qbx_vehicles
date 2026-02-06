@@ -296,6 +296,7 @@ local function saveVehicle(vehicle, options)
     return true
 end
 
+exports('SaveVehicle', saveVehicle)
 
 local function SaveVehicleById(vehicleid, options)
     if not vehicleid then
@@ -310,4 +311,4 @@ end
 
 exports('SaveVehicleById', SaveVehicleById)
 
-exports('SaveVehicle', saveVehicle)
+
