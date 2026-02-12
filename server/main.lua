@@ -249,7 +249,7 @@ local function buildSaveVehicleQuery(vehicleId, options)
 
         if options.props.plate then
             crumbs[#crumbs+1] = 'plate = ?'
-            placeholders[#placeholders+1] = options.props.plate
+            placeholders[#placeholders+1] = qbx.string.trim(options.props.plate)
         end
 
         if options.props.fuelLevel then
@@ -282,7 +282,7 @@ end
 ---@param options SaveVehicleOptions
 ---@return boolean success, ErrorResult? errorResult
 local function saveVehicle(vehicle, options)
-    local vehicleId = Entity(vehicle).state.vehicleid or getVehicleIdByPlate(GetVehicleNumberPlateText(vehicle))
+    local vehicleId = Entity(vehicle).state.vehicleid or getVehicleIdByPlate(qbx.string.trim(GetVehicleNumberPlateText(vehicle)))
     if not vehicleId then
         return false, {
             code = 'not_owned',
