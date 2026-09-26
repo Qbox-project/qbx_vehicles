@@ -150,6 +150,12 @@ local function createPlayerVehicle(request)
     local props = request.props or {}
     if props.plate then
         props.plate = trimPlate(props.plate)
+        if doesEntityPlateExist(props.plate) then
+            return nil, {
+                code = 'duplicate_plate',
+                message = 'a vehicle with this plate already exists in the player_vehicles table'
+            }
+        end
     else
         repeat
             props.plate = trimPlate(qbx.generateRandomPlate())
